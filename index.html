@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+
+    <head>
+        <title>three.js webgl - instancing - raycast</title>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+        <!-- <link type="text/css" rel="stylesheet" href="main.css"> -->
+    </head>
+
+    <body>
+        <script type="module">
+
+            import * as THREE from './build/three.module.js';
+            import { OrbitControls } from "./js/OrbitControls.js";
+
+            let camera, scene, renderer;
+
+            let mesh;
+
+            const raycaster = new THREE.Raycaster();
+            const mouse = new THREE.Vector2(1, 1);
+
+            const color = new THREE.Color();
+
+            init();
+            animate();
+
+            function init() {
+
+                scene = new THREE.Scene();
+
+
+                camera = new THREE.PerspectiveCamera(15, window.innerWidth / window.innerHeight, 0.1, 100);
+                camera.position.set(30, 30, 30);
+                camera.rotation.set(.1, .1, .1);
+                camera.lookAt(0, 0, 0);
+
+                const amount = 2;
+
+                
+                const geometry = new THREE.BoxGeometry(1, 1, 1);
+                const material = new THREE.MeshPhongMaterial({ color: 0x000066 });
+                
+                mesh = new THREE.InstancedMesh(geometry, material, amount);
+                
+                const matrix = new THREE.Matrix4();
+                
+                for (let i = 0; i < amount; i++) {                    
+                    
+                    matrix.setPosition(1 - i, 1, 1);
+                    
+                    mesh.setMatrixAt(i, matrix);
+                    mesh.setColorAt(i, color);                    
+                    
+                }
+                scene.add(mesh);
+                
+                
+                const light1 = new THREE.HemisphereLight(0xffffff, 0x000088);
+                light1.position.set(- 1, 1.5, 1);
+                scene.add(light1);
+
+                const size = 10;
+                const divisions = 10;
+
+                const gridHelper = new THREE.GridHelper(size, divisions);
+                scene.add(gridHelper);
+                //
+
+                /* const gui = new GUI();
+                gui.add( mesh, 'count', 0, count ); */
+
+                renderer = new THREE.WebGLRenderer({ antialias: true });
+                renderer.setPixelRatio(window.devicePixelRatio);
+                renderer.setSize(window.innerWidth, window.innerHeight);
+                document.body.appendChild(renderer.domElement);
+
+                new OrbitControls(camera, renderer.domElement);
+
+                window.addEventListener('resize', onWindowResize);
+                document.addEventListener('mousemove', onMouseMove);
+
+            }
+
+            function onWindowResize() {
+
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+
+                renderer.setSize(window.innerWidth, window.innerHeight);
+
+            }
+
+            function onMouseMove(event) {
+
+                event.preventDefault();
+
+                mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+                mouse.y = - (event.clientY / window.innerHeight) * 2 + 1;
+
+            }
+
+            function animate() {
+
+                requestAnimationFrame(animate);
+
+                render();
+
+            }
+
+            function render() {
+
+                raycaster.setFromCamera(mouse, camera);
+
+                const intersection = raycaster.intersectObject(mesh);
+
+                if (intersection.length > 0) {
+
+                    const instanceId = intersection[0].instanceId;
+
+                    mesh.setColorAt(instanceId, color.setHex(Math.random() * 0xffffff));
+                    mesh.instanceColor.needsUpdate = true;
+
+                }
+
+                renderer.render(scene, camera);
+
+
+            }
+
+        </script>
+    </body>
+
+</html>
