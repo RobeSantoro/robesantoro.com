@@ -19,7 +19,7 @@
 
             import * as THREE from './build/three.module.js';
 
-            import { OrbitControls } from "./js/OrbitControls.js";
+            //import { OrbitControls } from "./js/OrbitControls.js";
 
             import Stats from './libs/stats.module.js';
             import { GUI } from './libs/dat.gui.module.js';
@@ -69,7 +69,7 @@
                 camera.position.set(-40, 40, 40);
                 camera.lookAt(0, 0, 0);
 
-                new OrbitControls(camera, renderer.domElement);
+                //constcontrols = new OrbitControls(camera, renderer.domElement);
 
                 /// INSTANCES \\\
 
@@ -171,11 +171,14 @@
 
             function onMouseMove( event ) {
                 event.preventDefault();
+                //controls.enabled = true
                 mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
                 mouse.y = - (event.clientY / window.innerHeight) * 2 + 1;
             }
 
             function onMouseDown( event ) {
+                event.preventDefault();
+                //controls.enabled = false
                 
                 /// RAYCASTING \\\
                 raycaster.setFromCamera(mouse, camera);
@@ -190,8 +193,8 @@
                         //console.log(instanceId);
 
 
-                        //mesh.setColorAt(instanceId, color.setHex(0x000000));
-                        //mesh.instanceColor.needsUpdate = true;
+                        mesh.setColorAt(instanceId, color.setHex(0x111111));
+                        mesh.instanceColor.needsUpdate = true;
 
                         console.log(instanceId);
 
