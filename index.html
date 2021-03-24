@@ -5,6 +5,12 @@
         <title>three.js webgl - instancing - raycast</title>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+        <style>
+            * {
+                margin: 0;
+                padding: 0;
+            }
+        </style>
         <!-- <link type="text/css" rel="stylesheet" href="main.css"> -->
     </head>
 
@@ -14,12 +20,20 @@
             import * as THREE from './build/three.module.js';
             import { OrbitControls } from "./js/OrbitControls.js";
 
+            import { EffectComposer } from './js/EffectComposer.js';
+			import { SSAOPass } from './js/SSAOPass.js';
+
             let camera, scene, renderer;
+
+            let composer;
 
             let mesh;
 
             const raycaster = new THREE.Raycaster();
             const mouse = new THREE.Vector2(1, 1);
+
+            const width = window.innerWidth;
+			const height = window.innerHeight;
 
             const color = new THREE.Color();
 
@@ -30,53 +44,68 @@
 
                 scene = new THREE.Scene();
 
-
-                camera = new THREE.PerspectiveCamera(15, window.innerWidth / window.innerHeight, 0.1, 100);
-                camera.position.set(30, 30, 30);
-                camera.rotation.set(.1, .1, .1);
+                camera = new THREE.PerspectiveCamera(15, window.innerWidth / window.innerHeight, 0.1, 600);
+                camera.position.set(-40, 40, 40);
                 camera.lookAt(0, 0, 0);
 
-                const amount = 2;
+                /// INSTANCES \\\
 
-                
+                let i = 0;
+
+                const x_repeat = 10;
+                const y_repeat = 5;
+                const depth = 2;
+
                 const geometry = new THREE.BoxGeometry(1, 1, 1);
-                const material = new THREE.MeshPhongMaterial({ color: 0x000066 });
-                
-                mesh = new THREE.InstancedMesh(geometry, material, amount);
-                
+                const material = new THREE.MeshPhongMaterial({ color: 0xf0f0f0 });
+
+                mesh = new THREE.InstancedMesh(geometry, material, x_repeat);
+
                 const matrix = new THREE.Matrix4();
-                
-                for (let i = 0; i < amount; i++) {                    
-                    
-                    matrix.setPosition(1 - i, 1, 1);
-                    
+
+                for (let x = 0; x < x_repeat; x++) {
+
+                    matrix.setPosition(x, 0, x);
+
                     mesh.setMatrixAt(i, matrix);
-                    mesh.setColorAt(i, color);                    
-                    
+                    mesh.setColorAt(i, color);
+
+                    i++;
                 }
+
                 scene.add(mesh);
-                
-                
+
+                /// LIGHT \\\               
+
                 const light1 = new THREE.HemisphereLight(0xffffff, 0x000088);
                 light1.position.set(- 1, 1.5, 1);
                 scene.add(light1);
 
-                const size = 10;
-                const divisions = 10;
+                /// GRID \\\
+                const size = 20;
+                const divisions = 20;
 
                 const gridHelper = new THREE.GridHelper(size, divisions);
                 scene.add(gridHelper);
-                //
 
-                /* const gui = new GUI();
-                gui.add( mesh, 'count', 0, count ); */
+                const axesHelper = new THREE.AxesHelper(5);
+                scene.add(axesHelper);
+   
+                // RENDERER \\\
 
-                renderer = new THREE.WebGLRenderer({ antialias: true });
+                renderer = new THREE.WebGLRenderer({ antialias: false });
                 renderer.setPixelRatio(window.devicePixelRatio);
                 renderer.setSize(window.innerWidth, window.innerHeight);
                 document.body.appendChild(renderer.domElement);
 
                 new OrbitControls(camera, renderer.domElement);
+
+                composer = new EffectComposer( renderer );
+
+				const ssaoPass = new SSAOPass( scene, camera, width, height );
+				ssaoPass.kernelRadius = 32;
+				composer.addPass( ssaoPass );
+
 
                 window.addEventListener('resize', onWindowResize);
                 document.addEventListener('mousemove', onMouseMove);
@@ -85,10 +114,14 @@
 
             function onWindowResize() {
 
-                camera.aspect = window.innerWidth / window.innerHeight;
-                camera.updateProjectionMatrix();
+				const width = window.innerWidth;
+				const height = window.innerHeight;
 
-                renderer.setSize(window.innerWidth, window.innerHeight);
+				camera.aspect = width / height;
+				camera.updateProjectionMatrix();
+
+				renderer.setSize( width, height );
+				composer.setSize( width, height );
 
             }
 
@@ -99,14 +132,16 @@
                 mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
                 mouse.y = - (event.clientY / window.innerHeight) * 2 + 1;
 
+                //
+                //console.log(camera.position);
+
+                //
+
             }
 
             function animate() {
-
                 requestAnimationFrame(animate);
-
                 render();
-
             }
 
             function render() {
@@ -122,9 +157,12 @@
                     mesh.setColorAt(instanceId, color.setHex(Math.random() * 0xffffff));
                     mesh.instanceColor.needsUpdate = true;
 
+                    console.log(instanceId);
+
                 }
 
-                renderer.render(scene, camera);
+                composer.render();
+                //renderer.render(scene, camera);
 
 
             }
