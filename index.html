@@ -2,9 +2,10 @@
 <html lang="en">
 
     <head>
-        <title>three.js webgl - instancing - raycast</title>
+        <title>robesantoro.com</title>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+        
         <style>
             * {
                 margin: 0;
@@ -19,7 +20,7 @@
 
             import * as THREE from './build/three.module.js';
 
-            //import { OrbitControls } from "./js/OrbitControls.js";
+            import { OrbitControls } from "./js/OrbitControls.js";
 
             import Stats from './libs/stats.module.js';
             import { GUI } from './libs/dat.gui.module.js';
@@ -28,7 +29,7 @@
             import { SSAOPass } from './postprocessing/SSAOPass.js';
 
             let container, stats;
-            let camera, scene, renderer;
+            let camera, controls, scene, renderer;
             let composer;
             let mesh;
 
@@ -69,7 +70,19 @@
                 camera.position.set(-40, 40, 40);
                 camera.lookAt(0, 0, 0);
 
-                //constcontrols = new OrbitControls(camera, renderer.domElement);
+				controls = new OrbitControls( camera, renderer.domElement );
+				controls.listenToKeyEvents( window ); // optional
+
+				//controls.addEventListener( 'change', render ); // call this only in static scenes (i.e., if there is no animation loop)
+
+				controls.enableDamping = true; // an animation loop is required when either damping or auto-rotation are enabled
+				controls.dampingFactor = 0.05;
+
+				controls.screenSpacePanning = false;
+
+				controls.minDistance = 10;                
+				controls.maxDistance = 500;
+
 
                 /// INSTANCES \\\
 
@@ -114,7 +127,7 @@
                 composer = new EffectComposer(renderer);
 
                 const ssaoPass = new SSAOPass(scene, camera, width, height);
-                ssaoPass.kernelRadius = 2.2;
+                ssaoPass.kernelRadius = 32;
                 ssaoPass.minDistance = 0.001;
                 ssaoPass.maxDistance = 0.3;
 
@@ -151,7 +164,9 @@
                 /// EVENT LISTENER \\\
                 window.addEventListener('resize', onWindowResize);
                 document.addEventListener('mousemove', onMouseMove);
-                document.addEventListener( 'mousedown', onMouseDown);
+                document.addEventListener( 'click', onClick);
+                //document.addEventListener( 'mousedown', onMouseDown);
+
 
 
             }
@@ -176,10 +191,11 @@
                 mouse.y = - (event.clientY / window.innerHeight) * 2 + 1;
             }
 
-            function onMouseDown( event ) {
+            function onClick( event ) {
                 event.preventDefault();
                 //controls.enabled = false
-                
+                mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+                mouse.y = - (event.clientY / window.innerHeight) * 2 + 1;
                 /// RAYCASTING \\\
                 raycaster.setFromCamera(mouse, camera);
 
@@ -191,9 +207,9 @@
 
                     if (INTERSECTED != intersection[0].instanceId) {
                         //console.log(instanceId);
+                        let activeColor 
 
-
-                        mesh.setColorAt(instanceId, color.setHex(0x111111));
+                        mesh.setColorAt(instanceId, color.setHex( Math.random() * 0xffffff) );
                         mesh.instanceColor.needsUpdate = true;
 
                         console.log(instanceId);
@@ -206,6 +222,8 @@
             function animate() {
 
                 requestAnimationFrame(animate);
+                controls.update(); 
+
 
                 stats.begin();
                 render();
