@@ -18,134 +18,177 @@
         <script type="module">
 
             import * as THREE from './build/three.module.js';
+
             import { OrbitControls } from "./js/OrbitControls.js";
 
-            import { EffectComposer } from './js/EffectComposer.js';
-			import { SSAOPass } from './js/SSAOPass.js';
+            import Stats from './libs/stats.module.js';
+            import { GUI } from './libs/dat.gui.module.js';
 
+            import { EffectComposer } from './postprocessing/EffectComposer.js';
+            import { SSAOPass } from './postprocessing/SSAOPass.js';
+
+            let container, stats;
             let camera, scene, renderer;
-
             let composer;
-
             let mesh;
+
+            let INTERSECTED;
+
+            /// RAYCASTER \\\
 
             const raycaster = new THREE.Raycaster();
             const mouse = new THREE.Vector2(1, 1);
 
             const width = window.innerWidth;
-			const height = window.innerHeight;
+            const height = window.innerHeight;
 
             const color = new THREE.Color();
+
 
             init();
             animate();
 
             function init() {
 
-                scene = new THREE.Scene();
+                container = document.createElement('div');
+                document.body.appendChild(container);
 
+                renderer = new THREE.WebGLRenderer({ antialias: true });
+                renderer.setSize(window.innerWidth, window.innerHeight);
+                document.body.appendChild(renderer.domElement);
+
+                /// SCENE \\\
+                scene = new THREE.Scene();
+                scene.background = new THREE.Color(0x333333);
+
+                scene.add(new THREE.DirectionalLight());
+                scene.add(new THREE.HemisphereLight());
+
+                /// CAMERA \\\
                 camera = new THREE.PerspectiveCamera(15, window.innerWidth / window.innerHeight, 0.1, 600);
                 camera.position.set(-40, 40, 40);
                 camera.lookAt(0, 0, 0);
+
+                new OrbitControls(camera, renderer.domElement);
 
                 /// INSTANCES \\\
 
                 let i = 0;
 
-                const x_repeat = 10;
-                const y_repeat = 5;
-                const depth = 2;
+                const x_repeat = 15;
+                const y_repeat = 40;
+                const count = x_repeat * y_repeat;
 
                 const geometry = new THREE.BoxGeometry(1, 1, 1);
-                const material = new THREE.MeshPhongMaterial({ color: 0xf0f0f0 });
+                const material = new THREE.MeshPhongMaterial({ color: 0x333333 });
 
-                mesh = new THREE.InstancedMesh(geometry, material, x_repeat);
+                mesh = new THREE.InstancedMesh(geometry, material, count);
 
                 const matrix = new THREE.Matrix4();
 
-                for (let x = 0; x < x_repeat; x++) {
-
-                    matrix.setPosition(x, 0, x);
-
-                    mesh.setMatrixAt(i, matrix);
-                    mesh.setColorAt(i, color);
-
-                    i++;
+                for (let y = -10; y < y_repeat; y++) {                    
+                    
+                    for (let x = -16; x < x_repeat; x++) {
+                        
+                        matrix.setPosition(x, y, x+-y);
+                        
+                        mesh.setMatrixAt(i, matrix);
+                        mesh.setColorAt(i, color);
+                        
+                        i++;
+                    }
                 }
 
                 scene.add(mesh);
 
-                /// LIGHT \\\               
 
-                const light1 = new THREE.HemisphereLight(0xffffff, 0x000088);
-                light1.position.set(- 1, 1.5, 1);
-                scene.add(light1);
+
+
+                stats = new Stats();
+                container.appendChild(stats.dom);
+
+                const width = window.innerWidth;
+                const height = window.innerHeight;
+
+                composer = new EffectComposer(renderer);
+
+                const ssaoPass = new SSAOPass(scene, camera, width, height);
+                ssaoPass.kernelRadius = 2.2;
+                ssaoPass.minDistance = 0.001;
+                ssaoPass.maxDistance = 0.3;
+
+                composer.addPass(ssaoPass);
+
+                // Init gui
+                const gui = new GUI();
+
+                gui.add(ssaoPass, 'output', {
+                    'Default': SSAOPass.OUTPUT.Default,
+                    'SSAO Only': SSAOPass.OUTPUT.SSAO,
+                    'SSAO Only + Blur': SSAOPass.OUTPUT.Blur,
+                    'Beauty': SSAOPass.OUTPUT.Beauty,
+                    'Depth': SSAOPass.OUTPUT.Depth,
+                    'Normal': SSAOPass.OUTPUT.Normal
+                }).onChange(function (value) {
+                    ssaoPass.output = parseInt(value);
+                });
+
+                gui.add(ssaoPass, 'kernelRadius').min(0).max(32);
+                gui.add(ssaoPass, 'minDistance').min(0.001).max(0.02);
+                gui.add(ssaoPass, 'maxDistance').min(0.01).max(0.3);
 
                 /// GRID \\\
-                const size = 20;
+/*                 const size = 20;
                 const divisions = 20;
 
                 const gridHelper = new THREE.GridHelper(size, divisions);
                 scene.add(gridHelper);
 
                 const axesHelper = new THREE.AxesHelper(5);
-                scene.add(axesHelper);
-   
-                // RENDERER \\\
+                scene.add(axesHelper); */
 
-                renderer = new THREE.WebGLRenderer({ antialias: false });
-                renderer.setPixelRatio(window.devicePixelRatio);
-                renderer.setSize(window.innerWidth, window.innerHeight);
-                document.body.appendChild(renderer.domElement);
-
-                new OrbitControls(camera, renderer.domElement);
-
-                composer = new EffectComposer( renderer );
-
-				const ssaoPass = new SSAOPass( scene, camera, width, height );
-				ssaoPass.kernelRadius = 32;
-				composer.addPass( ssaoPass );
-
-
+                /// EVENT LISTENER \\\
                 window.addEventListener('resize', onWindowResize);
                 document.addEventListener('mousemove', onMouseMove);
+                //document.addEventListener( 'mousedown', onMouseDown);
+
 
             }
 
             function onWindowResize() {
 
-				const width = window.innerWidth;
-				const height = window.innerHeight;
+                const width = window.innerWidth;
+                const height = window.innerHeight;
 
-				camera.aspect = width / height;
-				camera.updateProjectionMatrix();
+                camera.aspect = width / height;
+                camera.updateProjectionMatrix();
 
-				renderer.setSize( width, height );
-				composer.setSize( width, height );
+                renderer.setSize(width, height);
+                composer.setSize(width, height);
 
             }
 
-            function onMouseMove(event) {
-
+            function onMouseMove( event ) {
                 event.preventDefault();
-
                 mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
                 mouse.y = - (event.clientY / window.innerHeight) * 2 + 1;
-
-                //
-                //console.log(camera.position);
-
-                //
-
             }
 
             function animate() {
+
                 requestAnimationFrame(animate);
+
+                stats.begin();
                 render();
+                stats.end();
+
             }
 
             function render() {
 
+                const timer = performance.now();
+
+                /// RAYCASTING \\\
                 raycaster.setFromCamera(mouse, camera);
 
                 const intersection = raycaster.intersectObject(mesh);
@@ -154,17 +197,29 @@
 
                     const instanceId = intersection[0].instanceId;
 
-                    mesh.setColorAt(instanceId, color.setHex(Math.random() * 0xffffff));
+                    if (INTERSECTED != intersection[0].instanceId) {
+                        //console.log(instanceId);
+
+
+                        //mesh.setColorAt(instanceId, color.setHex(0x000000));
+                        //mesh.instanceColor.needsUpdate = true;
+
+                        console.log(instanceId);
+
+                    }  
+                    
+                } 
+
+                else {
+                   
                     mesh.instanceColor.needsUpdate = true;
-
-                    console.log(instanceId);
-
                 }
+                    
+                
+
+
 
                 composer.render();
-                //renderer.render(scene, camera);
-
-
             }
 
         </script>
