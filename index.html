@@ -103,13 +103,14 @@
 
 
 
-
+                /// STATS \\\
                 stats = new Stats();
                 container.appendChild(stats.dom);
 
                 const width = window.innerWidth;
                 const height = window.innerHeight;
 
+                /// SSAO \\\
                 composer = new EffectComposer(renderer);
 
                 const ssaoPass = new SSAOPass(scene, camera, width, height);
@@ -119,7 +120,7 @@
 
                 composer.addPass(ssaoPass);
 
-                // Init gui
+                // GUI \\\
                 const gui = new GUI();
 
                 gui.add(ssaoPass, 'output', {
@@ -138,7 +139,7 @@
                 gui.add(ssaoPass, 'maxDistance').min(0.01).max(0.3);
 
                 /// GRID \\\
-/*                 const size = 20;
+/*              const size = 20;
                 const divisions = 20;
 
                 const gridHelper = new THREE.GridHelper(size, divisions);
@@ -150,7 +151,7 @@
                 /// EVENT LISTENER \\\
                 window.addEventListener('resize', onWindowResize);
                 document.addEventListener('mousemove', onMouseMove);
-                //document.addEventListener( 'mousedown', onMouseDown);
+                document.addEventListener( 'mousedown', onMouseDown);
 
 
             }
@@ -174,20 +175,8 @@
                 mouse.y = - (event.clientY / window.innerHeight) * 2 + 1;
             }
 
-            function animate() {
-
-                requestAnimationFrame(animate);
-
-                stats.begin();
-                render();
-                stats.end();
-
-            }
-
-            function render() {
-
-                const timer = performance.now();
-
+            function onMouseDown( event ) {
+                
                 /// RAYCASTING \\\
                 raycaster.setFromCamera(mouse, camera);
 
@@ -209,16 +198,22 @@
                     }  
                     
                 } 
+            }
 
-                else {
-                   
-                    mesh.instanceColor.needsUpdate = true;
-                }
-                    
+            function animate() {
+
+                requestAnimationFrame(animate);
+
+                stats.begin();
+                render();
+                stats.end();
+
+            }
+
+            function render() {
+
+                const timer = performance.now();  
                 
-
-
-
                 composer.render();
             }
 
