@@ -5,7 +5,7 @@
         <title>robesantoro.com</title>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
-        
+
         <style>
             * {
                 margin: 0;
@@ -20,7 +20,7 @@
 
             import * as THREE from './build/three.module.js';
 
-            /* import { OrbitControls } from "./js/OrbitControls.js"; */
+            /* import { OrbitControls } from "./js/OrbitControls.js"; */ 
 
             import Stats from './libs/stats.module.js';
             /* import { GUI } from './libs/dat.gui.module.js'; */
@@ -33,14 +33,20 @@
             let composer;
             let mesh;
 
+
             let INTERSECTED;
 
             let targetX, targetY;
+
+            let hemiLight, bulbLight, bulbMat;
+
 
             /// RAYCASTER \\\
 
             const raycaster = new THREE.Raycaster();
             const mouse = new THREE.Vector2(1, 1);
+
+
 
             const width = window.innerWidth;
             const height = window.innerHeight;
@@ -52,45 +58,71 @@
 
             function init() {
 
+
                 container = document.createElement('div');
                 document.body.appendChild(container);
 
                 renderer = new THREE.WebGLRenderer({ antialias: true });
+                renderer.physicallyCorrectLights = true;
+                renderer.outputEncoding = THREE.sRGBEncoding;
+                renderer.shadowMap.enabled = true;
+                renderer.toneMapping = THREE.ReinhardToneMapping;
+                renderer.setPixelRatio(window.devicePixelRatio);
                 renderer.setSize(window.innerWidth, window.innerHeight);
+
+
+                /// APPENDCHILD \\\
                 document.body.appendChild(renderer.domElement);
 
                 /// SCENE \\\
                 scene = new THREE.Scene();
                 scene.background = new THREE.Color(0x333333);
 
-                scene.add(new THREE.DirectionalLight());
-                scene.add(new THREE.HemisphereLight());
+                /// LIGHTS \\\
+
+                /*const bulbGeometry = new THREE.SphereGeometry(0.2, 16, 8);*/
+                bulbLight = new THREE.PointLight(0xffee88, 1, 100, 2);
+
+                /*bulbMat = new THREE.MeshStandardMaterial({
+                    emissive: 0xffffee,
+                    emissiveIntensity: 1,
+                    color: 0x000000
+                });*/
+
+                /*bulbLight.add(new THREE.Mesh(bulbGeometry, bulbMat));*/
+                bulbLight.position.set(5, 2, 5);
+                bulbLight.castShadow = true;
+                scene.add(bulbLight);
+
+                hemiLight = new THREE.HemisphereLight(0xddeeff, 0x0f0e0d, 0.02);
+                scene.add(hemiLight);
 
                 /// CAMERA \\\
-                camera = new THREE.PerspectiveCamera(15, window.innerWidth / window.innerHeight, 0.1, 600);
-                camera.position.set(-40, 40, 40);
+                camera = new THREE.PerspectiveCamera(15, window.innerWidth / window.innerHeight, 0.1, 100);
+                camera.position.set(0, 40, 60);
                 camera.lookAt(0, 0, 0);
 
+
                 /// ORBIT CONTROLS \\\
-/*                 
-				controls = new OrbitControls( camera, renderer.domElement );
-				controls.listenToKeyEvents( window ); // optional
-
-				//controls.addEventListener( 'change', render ); // call this only in static scenes (i.e., if there is no animation loop)
-
-				controls.enableDamping = true; // an animation loop is required when either damping or auto-rotation are enabled
-				controls.dampingFactor = 0.05;
-
-				controls.screenSpacePanning = false;
-
-				controls.minDistance = 10;                
-				controls.maxDistance = 500;
- */
+                                /* 
+                                controls = new OrbitControls( camera, renderer.domElement );
+                                controls.listenToKeyEvents( window ); // optional
+                
+                                //controls.addEventListener( 'change', render ); // call this only in static scenes (i.e., if there is no animation loop)
+                
+                                controls.enableDamping = true; // an animation loop is required when either damping or auto-rotation are enabled
+                                controls.dampingFactor = 0.05;
+                
+                                controls.screenSpacePanning = false;
+                
+                                controls.minDistance = 10;                
+                                controls.maxDistance = 500;
+                 */
                 /// INSTANCES \\\
 
                 let i = 0;
 
-                const x_repeat = 15;
+                const x_repeat = 20;
                 const y_repeat = 40;
                 const count = x_repeat * y_repeat;
 
@@ -101,19 +133,22 @@
 
                 const matrix = new THREE.Matrix4();
 
-                for (let y = -10; y < y_repeat; y++) {                    
-                    
+                for (let y = -10; y < y_repeat; y++) {
+
                     for (let x = -16; x < x_repeat; x++) {
-                        
-                        matrix.setPosition(x, y, x+-y);
-                        
+
+                        matrix.setPosition(x, y, x + -y);
+
                         mesh.setMatrixAt(i, matrix);
                         mesh.setColorAt(i, color);
-                        
+
+                        mesh.castShadow = true;
+                        mesh.receiveShadow = true;
+
                         i++;
                     }
                 }
-
+                mesh.rotation.set(0, Math.PI/4, 0);
                 scene.add(mesh);
 
 
@@ -126,51 +161,52 @@
                 const height = window.innerHeight;
 
                 /// SSAO \\\
-                composer = new EffectComposer(renderer);
+                /*composer = new EffectComposer(renderer);
 
-                const ssaoPass = new SSAOPass(scene, camera, width, height);
+                 const ssaoPass = new SSAOPass(scene, camera, width, height);
                 ssaoPass.kernelRadius = 32;
                 ssaoPass.minDistance = 0.001;
                 ssaoPass.maxDistance = 0.3;
 
-                composer.addPass(ssaoPass);
+                composer.addPass(ssaoPass); */
 
                 // GUI \\\
-/*                 
-                const gui = new GUI();
-
-                gui.add(ssaoPass, 'output', {
-                    'Default': SSAOPass.OUTPUT.Default,
-                    'SSAO Only': SSAOPass.OUTPUT.SSAO,
-                    'SSAO Only + Blur': SSAOPass.OUTPUT.Blur,
-                    'Beauty': SSAOPass.OUTPUT.Beauty,
-                    'Depth': SSAOPass.OUTPUT.Depth,
-                    'Normal': SSAOPass.OUTPUT.Normal
-                }).onChange(function (value) {
-                    ssaoPass.output = parseInt(value);
-                });
-
-                gui.add(ssaoPass, 'kernelRadius').min(0).max(32);
-                gui.add(ssaoPass, 'minDistance').min(0.001).max(0.02);
-                gui.add(ssaoPass, 'maxDistance').min(0.01).max(0.3);
- */                
+                /*                 
+                                const gui = new GUI();
+                
+                                gui.add(ssaoPass, 'output', {
+                                    'Default': SSAOPass.OUTPUT.Default,
+                                    'SSAO Only': SSAOPass.OUTPUT.SSAO,
+                                    'SSAO Only + Blur': SSAOPass.OUTPUT.Blur,
+                                    'Beauty': SSAOPass.OUTPUT.Beauty,
+                                    'Depth': SSAOPass.OUTPUT.Depth,
+                                    'Normal': SSAOPass.OUTPUT.Normal
+                                }).onChange(function (value) {
+                                    ssaoPass.output = parseInt(value);
+                                });
+                
+                                gui.add(ssaoPass, 'kernelRadius').min(0).max(32);
+                                gui.add(ssaoPass, 'minDistance').min(0.001).max(0.02);
+                                gui.add(ssaoPass, 'maxDistance').min(0.01).max(0.3);
+                 */
 
                 /// GRID \\\
-/*               
-              const size = 20;
+/* 
+                const size = 20;
                 const divisions = 20;
 
                 const gridHelper = new THREE.GridHelper(size, divisions);
                 scene.add(gridHelper);
 
                 const axesHelper = new THREE.AxesHelper(5);
-                scene.add(axesHelper); 
-*/
+                scene.add(axesHelper);
+ */
+
                 /// EVENT LISTENER \\\
                 window.addEventListener('resize', onWindowResize);
                 document.addEventListener('mousemove', onMouseMove);
                 //document.addEventListener( 'click', onClick);
-                document.addEventListener( 'mousedown', onMouseDown);
+                document.addEventListener('mousedown', onMouseDown);
 
 
 
@@ -185,20 +221,21 @@
                 camera.updateProjectionMatrix();
 
                 renderer.setSize(width, height);
-                composer.setSize(width, height);
+                //composer.setSize(width, height);
 
             }
 
-            function onMouseMove( event ) {
+            function onMouseMove(event) {
                 event.preventDefault();
-                
+
                 getMouse();
             }
 
-            function onMouseDown( event ) {
+            function onMouseDown(event) {
                 event.preventDefault();
 
-                getMouse();
+                getMouse(); // get normalized mouse coordinates for raycaster
+
                 /// RAYCASTING \\\
                 raycaster.setFromCamera(mouse, camera);
 
@@ -209,17 +246,16 @@
                     const instanceId = intersection[0].instanceId;
 
                     if (INTERSECTED != intersection[0].instanceId) {
-                        
-                        let activeColor 
 
-                        mesh.setColorAt(instanceId, color.setHex( Math.random() * 0xffffff) );
+                        mesh.setColorAt(instanceId, color.setHex(Math.random() * 0xffffff));
                         mesh.instanceColor.needsUpdate = true;
 
-                        console.log(instanceId);
+                        //console.log(instanceId);
+                    }
 
-                    }  
-                    
-                } 
+                }
+
+
             }
 
             function animate() {
@@ -237,29 +273,30 @@
 
                 const timer = performance.now();  
                 
-                targetX = mouse.x * .5;
-				targetY = mouse.y * .5;
-                
+                var bulbPosition = new THREE.Vector3( mouse.x*10, mouse.y*6+3, -mouse.y*5+5 );                  
+
+                if (mesh) {
+                    bulbLight.position.set(bulbPosition.x, bulbPosition.y, bulbPosition.z );
+                }
+
+                //console.log(vector);
+
+                renderer.toneMappingExposure = Math.pow(2, 5.0); // to allow for very bright scenes.
+                renderer.shadowMap.enabled = true;
+                bulbLight.castShadow = true;
 
 
-				if ( mesh ) {
-
-					mesh.rotation.y += 0.05 * ( targetX - mesh.rotation.y );
-                    //camera.rotation.set(-0.7853981633974481, -0.6154797086703871+targetX , -0.5235987755982987);
-                                      
-					//mesh.rotation.x += 0.05 * ( targetY - mesh.rotation.x );
-
-				}
-
-
-                composer.render();
+                renderer.render(scene, camera);
+                //composer.render();
             }
 
             function getMouse() {
-                                
+
+
                 mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
                 mouse.y = - (event.clientY / window.innerHeight) * 2 + 1;
             }
+
         </script>
     </body>
 
