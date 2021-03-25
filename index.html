@@ -10,20 +10,36 @@
             * {
                 margin: 0;
                 padding: 0;
+                font-family:Arial, Helvetica, sans-serif
+            }
+
+            #underdev {
+                color: aliceblue;
+                position: absolute;
+                left: 50px;
+                top: 50%;
             }
         </style>
         <!-- <link type="text/css" rel="stylesheet" href="main.css"> -->
     </head>
 
     <body>
+        <div id="underdev">
+            <h1>under development...</h1>
+            <p>In the meantime you can help me giving some color to th cubes.</p>
+
+        </div>
+
         <script type="module">
 
             import * as THREE from './build/three.module.js';
 
-            /* import { OrbitControls } from "./js/OrbitControls.js"; */ 
+            /* import { OrbitControls } from "./js/OrbitControls.js"; */
 
-            import Stats from './libs/stats.module.js';
+            /* import Stats from './libs/stats.module.js'; */
             /* import { GUI } from './libs/dat.gui.module.js'; */
+
+            //import { EXRLoader } from './jsm/loaders/EXRLoader.js';
 
             import { EffectComposer } from './postprocessing/EffectComposer.js';
             import { SSAOPass } from './postprocessing/SSAOPass.js';
@@ -32,7 +48,6 @@
             let camera, controls, scene, renderer;
             let composer;
             let mesh;
-
 
             let INTERSECTED;
 
@@ -104,20 +119,20 @@
 
 
                 /// ORBIT CONTROLS \\\
-                                /* 
-                                controls = new OrbitControls( camera, renderer.domElement );
-                                controls.listenToKeyEvents( window ); // optional
-                
-                                //controls.addEventListener( 'change', render ); // call this only in static scenes (i.e., if there is no animation loop)
-                
-                                controls.enableDamping = true; // an animation loop is required when either damping or auto-rotation are enabled
-                                controls.dampingFactor = 0.05;
-                
-                                controls.screenSpacePanning = false;
-                
-                                controls.minDistance = 10;                
-                                controls.maxDistance = 500;
-                 */
+                /* 
+                controls = new OrbitControls( camera, renderer.domElement );
+                controls.listenToKeyEvents( window ); // optional
+ 
+                //controls.addEventListener( 'change', render ); // call this only in static scenes (i.e., if there is no animation loop)
+ 
+                controls.enableDamping = true; // an animation loop is required when either damping or auto-rotation are enabled
+                controls.dampingFactor = 0.05;
+ 
+                controls.screenSpacePanning = false;
+ 
+                controls.minDistance = 10;                
+                controls.maxDistance = 500;
+ */
                 /// INSTANCES \\\
 
                 let i = 0;
@@ -127,7 +142,10 @@
                 const count = x_repeat * y_repeat;
 
                 const geometry = new THREE.BoxGeometry(1, 1, 1);
-                const material = new THREE.MeshPhongMaterial({ color: 0x333333 });
+                const material = new THREE.MeshPhongMaterial({
+                    color: 'rgb(240, 240, 240)'/*,
+                    //.envMap: */
+                });
 
                 mesh = new THREE.InstancedMesh(geometry, material, count);
 
@@ -148,14 +166,14 @@
                         i++;
                     }
                 }
-                mesh.rotation.set(0, Math.PI/4, 0);
+                mesh.rotation.set(0, Math.PI / 4, 0);
                 scene.add(mesh);
 
 
 
                 /// STATS \\\
-                stats = new Stats();
-                container.appendChild(stats.dom);
+                /* stats = new Stats();
+                container.appendChild(stats.dom); */
 
                 const width = window.innerWidth;
                 const height = window.innerHeight;
@@ -191,16 +209,16 @@
                  */
 
                 /// GRID \\\
-/* 
-                const size = 20;
-                const divisions = 20;
-
-                const gridHelper = new THREE.GridHelper(size, divisions);
-                scene.add(gridHelper);
-
-                const axesHelper = new THREE.AxesHelper(5);
-                scene.add(axesHelper);
- */
+                /* 
+                                const size = 20;
+                                const divisions = 20;
+                
+                                const gridHelper = new THREE.GridHelper(size, divisions);
+                                scene.add(gridHelper);
+                
+                                const axesHelper = new THREE.AxesHelper(5);
+                                scene.add(axesHelper);
+                 */
 
                 /// EVENT LISTENER \\\
                 window.addEventListener('resize', onWindowResize);
@@ -263,20 +281,20 @@
                 requestAnimationFrame(animate);
                 /* controls.update(); */
 
-                stats.begin();
+                /* stats.begin(); */
                 render();
-                stats.end();
+                /* stats.end(); */
 
             }
 
             function render() {
 
-                const timer = performance.now();  
-                
-                var bulbPosition = new THREE.Vector3( mouse.x*10, mouse.y*6+3, -mouse.y*5+5 );                  
+                const timer = performance.now();
+
+                var bulbPosition = new THREE.Vector3(mouse.x * 10, mouse.y * 6 + 3, -mouse.y * 5 + 5);
 
                 if (mesh) {
-                    bulbLight.position.set(bulbPosition.x, bulbPosition.y, bulbPosition.z );
+                    bulbLight.position.set(bulbPosition.x, bulbPosition.y, bulbPosition.z);
                 }
 
                 //console.log(vector);
