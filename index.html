@@ -10,12 +10,13 @@
             * {
                 margin: 0;
                 padding: 0;
-                font-family:Arial, Helvetica, sans-serif
+                font-family: Arial, Helvetica, sans-serif
             }
 
-            h2{
+            h2 {
                 font-size: 1rem;
             }
+
             p {
                 margin-top: 20px;
                 padding-right: 30px;
@@ -42,16 +43,8 @@
         <script type="module">
 
             import * as THREE from './build/three.module.js';
-
-            /* import { OrbitControls } from "./js/OrbitControls.js"; */
-
-            /* import Stats from './libs/stats.module.js'; */
+            import Stats from './libs/stats.module.js';
             /* import { GUI } from './libs/dat.gui.module.js'; */
-
-            //import { EXRLoader } from './jsm/loaders/EXRLoader.js';
-
-            import { EffectComposer } from './postprocessing/EffectComposer.js';
-            import { SSAOPass } from './postprocessing/SSAOPass.js';
 
             let container, stats;
             let camera, controls, scene, renderer;
@@ -59,8 +52,6 @@
             let mesh;
 
             let INTERSECTED;
-
-            let targetX, targetY;
 
             let hemiLight, bulbLight, bulbMat;
 
@@ -80,7 +71,6 @@
 
             function init() {
 
-
                 container = document.createElement('div');
                 document.body.appendChild(container);
 
@@ -92,7 +82,6 @@
                 renderer.setPixelRatio(window.devicePixelRatio);
                 renderer.setSize(window.innerWidth, window.innerHeight);
 
-
                 /// APPENDCHILD \\\
                 document.body.appendChild(renderer.domElement);
 
@@ -102,44 +91,28 @@
 
                 /// LIGHTS \\\
 
-                /*const bulbGeometry = new THREE.SphereGeometry(0.2, 16, 8);*/
                 bulbLight = new THREE.PointLight(0xffee88, 1, 100, 2);
+                const bulbGeometry = new THREE.SphereGeometry(0.2, 16, 8);
 
-                /*bulbMat = new THREE.MeshStandardMaterial({
+                bulbMat = new THREE.MeshStandardMaterial({
                     emissive: 0xffffee,
                     emissiveIntensity: 1,
                     color: 0x000000
-                });*/
+                });
 
-                /*bulbLight.add(new THREE.Mesh(bulbGeometry, bulbMat));*/
+                bulbLight.add(new THREE.Mesh(bulbGeometry, bulbMat));
                 bulbLight.position.set(5, 2, 5);
                 bulbLight.castShadow = true;
                 scene.add(bulbLight);
 
-                hemiLight = new THREE.HemisphereLight(0xddeeff, 0x0f0e0d, 0.02);
-                scene.add(hemiLight);
+                //hemiLight = new THREE.HemisphereLight(0xddeeff, 0x0f0e0d, 0.02);
+                //scene.add(hemiLight);
 
                 /// CAMERA \\\
                 camera = new THREE.PerspectiveCamera(15, window.innerWidth / window.innerHeight, 0.1, 100);
                 camera.position.set(0, 40, 60);
                 camera.lookAt(0, 0, 0);
 
-
-                /// ORBIT CONTROLS \\\
-                /* 
-                controls = new OrbitControls( camera, renderer.domElement );
-                controls.listenToKeyEvents( window ); // optional
- 
-                //controls.addEventListener( 'change', render ); // call this only in static scenes (i.e., if there is no animation loop)
- 
-                controls.enableDamping = true; // an animation loop is required when either damping or auto-rotation are enabled
-                controls.dampingFactor = 0.05;
- 
-                controls.screenSpacePanning = false;
- 
-                controls.minDistance = 10;                
-                controls.maxDistance = 500;
- */
                 /// INSTANCES \\\
 
                 let i = 0;
@@ -150,8 +123,8 @@
 
                 const geometry = new THREE.BoxGeometry(1, 1, 1);
                 const material = new THREE.MeshPhongMaterial({
-                    color: 'rgb(240, 240, 240)'/*,
-                    //.envMap: */
+                    color: 'rgb(240, 240, 240)',
+                    envMap: ''
                 });
 
                 mesh = new THREE.InstancedMesh(geometry, material, count);
@@ -176,64 +149,32 @@
                 mesh.rotation.set(0, Math.PI / 4, 0);
                 scene.add(mesh);
 
-
-
                 /// STATS \\\
-                /* stats = new Stats();
-                container.appendChild(stats.dom); */
+
+                stats = new Stats();
+                container.appendChild(stats.dom);
 
                 const width = window.innerWidth;
                 const height = window.innerHeight;
 
-                /// SSAO \\\
-                /*composer = new EffectComposer(renderer);
-
-                 const ssaoPass = new SSAOPass(scene, camera, width, height);
-                ssaoPass.kernelRadius = 32;
-                ssaoPass.minDistance = 0.001;
-                ssaoPass.maxDistance = 0.3;
-
-                composer.addPass(ssaoPass); */
-
-                // GUI \\\
-                /*                 
-                                const gui = new GUI();
-                
-                                gui.add(ssaoPass, 'output', {
-                                    'Default': SSAOPass.OUTPUT.Default,
-                                    'SSAO Only': SSAOPass.OUTPUT.SSAO,
-                                    'SSAO Only + Blur': SSAOPass.OUTPUT.Blur,
-                                    'Beauty': SSAOPass.OUTPUT.Beauty,
-                                    'Depth': SSAOPass.OUTPUT.Depth,
-                                    'Normal': SSAOPass.OUTPUT.Normal
-                                }).onChange(function (value) {
-                                    ssaoPass.output = parseInt(value);
-                                });
-                
-                                gui.add(ssaoPass, 'kernelRadius').min(0).max(32);
-                                gui.add(ssaoPass, 'minDistance').min(0.001).max(0.02);
-                                gui.add(ssaoPass, 'maxDistance').min(0.01).max(0.3);
-                 */
-
                 /// GRID \\\
-                /* 
-                                const size = 20;
-                                const divisions = 20;
-                
-                                const gridHelper = new THREE.GridHelper(size, divisions);
-                                scene.add(gridHelper);
-                
-                                const axesHelper = new THREE.AxesHelper(5);
-                                scene.add(axesHelper);
-                 */
+                /*
+                const size = 20;
+                const divisions = 20;
+
+                const gridHelper = new THREE.GridHelper(size, divisions);
+                scene.add(gridHelper);
+
+                const axesHelper = new THREE.AxesHelper(5);
+                scene.add(axesHelper);
+                */
 
                 /// EVENT LISTENER \\\
                 window.addEventListener('resize', onWindowResize);
                 document.addEventListener('mousemove', onMouseMove);
+
                 //document.addEventListener( 'click', onClick);
                 document.addEventListener('mousedown', onMouseDown);
-
-
 
             }
 
@@ -246,7 +187,6 @@
                 camera.updateProjectionMatrix();
 
                 renderer.setSize(width, height);
-                //composer.setSize(width, height);
 
             }
 
@@ -254,6 +194,17 @@
                 event.preventDefault();
 
                 getMouse();
+
+                var bulbPosition = new THREE.Vector3(mouse.x * 10, mouse.y * 6 + 3, -mouse.y * 5 + 5);
+
+                if (mesh) {
+                    bulbLight.position.set(bulbPosition.x, bulbPosition.y, bulbPosition.z);
+                }
+
+                renderer.toneMappingExposure = Math.pow(2, 5.0); // to allow for very bright scenes.
+                renderer.shadowMap.enabled = true;
+                bulbLight.castShadow = true;
+
             }
 
             function onMouseDown(event) {
@@ -277,47 +228,26 @@
 
                         //console.log(instanceId);
                     }
-
                 }
-
 
             }
 
             function animate() {
 
-                requestAnimationFrame(animate);
-                /* controls.update(); */
-
-                /* stats.begin(); */
+                stats.begin();
                 render();
-                /* stats.end(); */
+                stats.end();
 
+                requestAnimationFrame(animate);
             }
 
             function render() {
-
                 const timer = performance.now();
-
-                var bulbPosition = new THREE.Vector3(mouse.x * 10, mouse.y * 6 + 3, -mouse.y * 5 + 5);
-
-                if (mesh) {
-                    bulbLight.position.set(bulbPosition.x, bulbPosition.y, bulbPosition.z);
-                }
-
-                //console.log(vector);
-
-                renderer.toneMappingExposure = Math.pow(2, 5.0); // to allow for very bright scenes.
-                renderer.shadowMap.enabled = true;
-                bulbLight.castShadow = true;
-
-
                 renderer.render(scene, camera);
-                //composer.render();
             }
 
             function getMouse() {
-
-
+                // get normalized mouse coordinates for raycaster
                 mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
                 mouse.y = - (event.clientY / window.innerHeight) * 2 + 1;
             }
