@@ -1,5 +1,6 @@
 import * as THREE from './three.module.js';
-//import Stats from './stats.module.js';
+import Stats from './stats.module.js';
+import { DeviceOrientationControls } from './DeviceOrientationControls.js';
 
 let container, stats;
 let camera, scene, renderer;
@@ -8,8 +9,10 @@ let mesh;
 let INTERSECTED;
 let hemiLight, bulbLight, bulbMat;
 
-let leftclick;
-let isTouched;
+let IsClicking;
+let isTouching;
+
+let controls;
 
 let OrientationX, OrientationY;
 
@@ -19,75 +22,57 @@ const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2(1, 1);
 const touch = new THREE.Vector2(1, 1);
 
-const group = new THREE.Group();
+const CamGroup = new THREE.Group();
 const color = new THREE.Color();
 
 // at init time
 const xElem = document.querySelector('#x');
 const yElem = document.querySelector('#y');
-//const zElem = document.querySelector('#z');
+const isMobileSpan = document.querySelector('#isMobile');
 
-var isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+let isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
 init();
 animate();
 
-function init() {
+function init() { 
 
+  isMobileSpan.innerHTML = isMobile;
+
+  /// CREATE CONTAINER
   container = document.createElement('div');
   document.body.appendChild(container);
 
-  /// CAMERA \\\
-  camera = new THREE.PerspectiveCamera(15, window.innerWidth / window.innerHeight, 0.5, 200);
-  camera.position.set(0, 40, 60);
-  camera.lookAt(0, 0, 0);
-
-  /// RENDERER \\\
-  renderer = new THREE.WebGLRenderer({ antialias: true });
-  renderer.physicallyCorrectLights = true;
-  renderer.outputEncoding = THREE.sRGBEncoding;
-  renderer.shadowMap.enabled = true;
-  renderer.toneMapping = THREE.ReinhardToneMapping;
-  renderer.setPixelRatio(window.devicePixelRatio);
-  renderer.setSize(window.innerWidth, window.innerHeight);
-
-  /// APPENDCHILD \\\
-  document.body.appendChild(renderer.domElement);
+  /// STATS \\\
+  stats = new Stats();
+  container.appendChild(stats.dom);
 
   /// SCENE \\\
   scene = new THREE.Scene();
   scene.background = new THREE.Color(0x333333);
 
-  /// GROUP \\\
-  group.add(camera);
-  scene.add(group);
+  /// CAMERA \\\
+  camera = new THREE.PerspectiveCamera(15, window.innerWidth / window.innerHeight, 0.5, 500);
+  camera.position.set(0, 40, 90);
+  camera.lookAt(0, 0, 0);
+
+  /// CamGroup \\\
+  CamGroup.add(camera);
+  scene.add(CamGroup);
+
+  if (isMobile == true) {    
+    controls = new DeviceOrientationControls( camera );
+  }
 
   /// GRID \\\
-
-  /*
-  const size = 20;
-  const divisions = 20;
-  const gridHelper = new THREE.GridHelper(size, divisions);
-  scene.add(gridHelper);
-  const axesHelper = new THREE.AxesHelper(5);
-  scene.add(axesHelper);
-  */
+  /* const size = 20;  const divisions = 20;  const gridHelper = new THREE.GridHelper(size, divisions);  scene.add(gridHelper);  const axesHelper = new THREE.AxesHelper(5);  scene.add(axesHelper);  */
 
   /// LIGHT MESH \\\
-
-  /*
-  const bulbGeometry = new THREE.SphereGeometry(0.2, 16, 8);  
-  bulbMat = new THREE.MeshStandardMaterial({
-    emissive: 0xffffee,
-    emissiveIntensity: 1,
-    color: 0x000000
-  });  
-  bulbLight.add(new THREE.Mesh(bulbGeometry, bulbMat));
-  */
+  /*  const bulbGeometry = new THREE.SphereGeometry(0.2, 16, 8);    bulbMat = new THREE.MeshStandardMaterial({    emissive: 0xffffee,    emissiveIntensity: 1,    color: 0x000000  });    bulbLight.add(new THREE.Mesh(bulbGeometry, bulbMat));  */
 
   /// LIGHTS \\\
 
-  bulbLight = new THREE.PointLight(0xffee88, 1, 100, 2);
+  bulbLight = new THREE.PointLight(0xffee88, 2, 100, 2);
   bulbLight.position.set(5, 2, 5);
   bulbLight.castShadow = true;
   scene.add(bulbLight);
@@ -99,8 +84,8 @@ function init() {
 
   let i = 0;
 
-  const x_repeat = 40;
-  const y_repeat = 80;
+  const x_repeat = 80;
+  const y_repeat = 45;
   const count = x_repeat * y_repeat;
 
   const geometry = new THREE.BoxGeometry(1, 1, 1);
@@ -112,9 +97,9 @@ function init() {
 
   const matrix = new THREE.Matrix4();
 
-  for (let y = -40; y < y_repeat; y++) {
+  for (let y = -10; y < y_repeat; y++) {
 
-    for (let x = -20; x < x_repeat; x++) {
+    for (let x = -40; x < x_repeat; x++) {
 
       matrix.setPosition(x, y, x + -y);
 
@@ -130,23 +115,30 @@ function init() {
   mesh.rotation.set(0, Math.PI / 4, 0);
   scene.add(mesh);
 
-  /// STATS \\\
-  /*
-  stats = new Stats();
-  container.appendChild(stats.dom);
-  */
+ 
+  /// RENDERER \\\
+  renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.physicallyCorrectLights = true;
+  renderer.outputEncoding = THREE.sRGBEncoding;
+  renderer.shadowMap.enabled = true;
+  renderer.toneMapping = THREE.ReinhardToneMapping;
+  renderer.setPixelRatio(window.devicePixelRatio);
+  renderer.setSize(window.innerWidth, window.innerHeight);
+
+  /// APPENDCHILD \\\
+  document.body.appendChild(renderer.domElement);
 
   /// EVENT LISTENER \\\
   window.addEventListener('resize', onWindowResize);
-
-  document.addEventListener('mousemove', onMouseMove);
-  document.addEventListener('mousedown', onMouseDown);
-  document.addEventListener('mouseup', onMouseUp);
 
   if (isMobile) {
     document.addEventListener('touchstart', onTouchStart, { passive: false });
     document.addEventListener('touchend', onTouchEnd, { passive: false });
     document.addEventListener('touchmove', onTouchMove, { passive: false });
+  } else {
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mousedown', onMouseDown);
+    document.addEventListener('mouseup', onMouseUp);
   }
 
 }
@@ -155,7 +147,7 @@ function init() {
 function onTouchStart(event) {
   event.preventDefault();
 
-  isTouched = true;
+  isTouching = true;
 
   // get normalized mouse coordinates for raycaster
   touch.x = (event.touches[0].clientX / window.innerWidth) * 2 - 1;
@@ -171,26 +163,40 @@ function onTouchStart(event) {
     const instanceId = intersection[0].instanceId;
 
     if (INTERSECTED != intersection[0].instanceId) {
-
       mesh.setColorAt(instanceId, color.setHex(Math.random() * 0xffffff));
       mesh.instanceColor.needsUpdate = true;
-
-      console.log(instanceId);
-
     }
   }
 
 }
 function onTouchEnd(event) {
+  isTouching = false;
 }
 function onTouchMove(event) {
   event.preventDefault();
 
-  // get normalized mouse coordinates for raycaster
+  var bulbPosition = new THREE.Vector3(touch.x * 10, touch.y * 6 + 3, -touch.y * 5 + 5);
+
+  // get normalized touch coordinates for raycaster
   touch.x = (event.touches[0].clientX / window.innerWidth) * 2 - 1;
   touch.y = - (event.touches[0].clientY / window.innerHeight) * 2 + 1;
 
-  var bulbPosition = new THREE.Vector3(touch.x * 10, touch.y * 6 + 3, -touch.y * 5 + 5);
+  xElem.innerHTML = touch.x.toFixed(2);
+  yElem.innerHTML = touch.y.toFixed(2);
+
+  /// RAYCASTING \\\
+  raycaster.setFromCamera(touch, camera);
+  const intersection = raycaster.intersectObject(mesh);
+
+  if (intersection.length > 0) {
+    const instanceId = intersection[0].instanceId;
+
+    if (INTERSECTED != intersection[0].instanceId) {
+      mesh.setColorAt(instanceId, color.setHex(Math.random() * 0xffffff));
+      mesh.instanceColor.needsUpdate = true;
+      //console.log(instanceId);
+    }
+  }
 
   if (isMobile) {
     bulbLight.position.set(bulbPosition.x, bulbPosition.y, bulbPosition.z);
@@ -201,7 +207,7 @@ function onTouchMove(event) {
 /// MOUSE \\\
 function onMouseDown(event) {
 
-  leftclick = true;
+  IsClicking = true;
 
   // get normalized mouse coordinates for raycaster
   mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
@@ -217,13 +223,13 @@ function onMouseDown(event) {
     if (INTERSECTED != intersection[0].instanceId) {
       mesh.setColorAt(instanceId, color.setHex(Math.random() * 0xffffff));
       mesh.instanceColor.needsUpdate = true;
-      console.log(instanceId);
+      //console.log(instanceId);
     }
   }
 
 }
 function onMouseUp(event) {
-  leftclick = false;
+  IsClicking = false;
 }
 function onMouseMove(event) {
 
@@ -231,16 +237,16 @@ function onMouseMove(event) {
   mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
   mouse.y = - (event.clientY / window.innerHeight) * 2 + 1;
 
-  var bulbPosition = new THREE.Vector3(mouse.x * 10, mouse.y * 6 + 3, -mouse.y * 5 + 5);
+  let bulbPosition = new THREE.Vector3(mouse.x * 10, mouse.y * 6 + 3, -mouse.y * 5 + 5);
 
-  /// IF NOT MOBILE \\\
+
+  /// IF MOBILE \\\
   if (!isMobile) {
+
+    // Move light
     bulbLight.position.set(bulbPosition.x, bulbPosition.y, bulbPosition.z);
-
-    //camera.position.x = - mouse.x * 40;
-    //camera.lookAt(0, 0, 0);
-
-    group.rotation.set(mouse.y*.01, -mouse.x*.1, 0);
+    //Rotate Camera CamGroup
+    CamGroup.rotation.set(mouse.y * .1, mouse.x * .1, 0);
 
     /// RAYCASTING \\\
     raycaster.setFromCamera(mouse, camera);
@@ -248,14 +254,13 @@ function onMouseMove(event) {
     const intersection = raycaster.intersectObject(mesh);
 
     if (intersection.length > 0) {
+
       const instanceId = intersection[0].instanceId;
-
-      if (INTERSECTED != intersection[0].instanceId & leftclick == true) {
-
+      if (INTERSECTED != intersection[0].instanceId & IsClicking == true) {
         mesh.setColorAt(instanceId, color.setHex(Math.random() * 0xffffff));
         mesh.instanceColor.needsUpdate = true;
-
       }
+
     }
 
   }
