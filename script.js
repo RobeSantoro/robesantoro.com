@@ -122,7 +122,7 @@ function init() {
   /// EVENT LISTENER \\\
   window.addEventListener('resize', onWindowResize);
   document.addEventListener('mousemove', onMouseMove);
-  document.addEventListener('touchmove', onTouchMove);
+  document.addEventListener('touchmove', onTouchMove, { passive: false });
 
   //document.addEventListener( 'click', onClick);
   document.addEventListener('mousedown', onMouseDown);
@@ -144,11 +144,11 @@ function onWindowResize() {
 }
 
 function onMouseMove(event) {
-  //event.preventDefault();
+  event.preventDefault();
 
-    // get normalized mouse coordinates for raycaster
-    mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-    mouse.y = - (event.clientY / window.innerHeight) * 2 + 1;
+  // get normalized mouse coordinates for raycaster
+  mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+  mouse.y = - (event.clientY / window.innerHeight) * 2 + 1;
 
   var bulbPosition = new THREE.Vector3(mouse.x * 10, mouse.y * 6 + 3, -mouse.y * 5 + 5);
 
@@ -165,9 +165,9 @@ function onMouseMove(event) {
 function onTouchMove(event) {
   event.preventDefault();
 
-    // get normalized mouse coordinates for raycaster
-    mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-    mouse.y = - (event.clientY / window.innerHeight) * 2 + 1;
+  // get normalized mouse coordinates for raycaster
+  mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+  mouse.y = - (event.clientY / window.innerHeight) * 2 + 1;
 
   var bulbPosition = new THREE.Vector3(mouse.x * 10, mouse.y * 6 + 3, -mouse.y * 5 + 5);
 
@@ -184,9 +184,9 @@ function onTouchMove(event) {
 function onMouseDown(event) {
   event.preventDefault();
 
-    // get normalized mouse coordinates for raycaster
-    mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-    mouse.y = - (event.clientY / window.innerHeight) * 2 + 1;
+  // get normalized mouse coordinates for raycaster
+  mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+  mouse.y = - (event.clientY / window.innerHeight) * 2 + 1;
 
   /// RAYCASTING \\\
   raycaster.setFromCamera(mouse, camera);
