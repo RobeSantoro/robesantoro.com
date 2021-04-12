@@ -1,5 +1,5 @@
 import * as THREE from './three.module.js';
-import Stats from './stats.module.js';
+//import Stats from './stats.module.js';
 import { DeviceOrientationControls } from './DeviceOrientationControls.js';
 
 let container, stats;
@@ -26,10 +26,11 @@ const CamGroup = new THREE.Group();
 const color = new THREE.Color();
 
 // at init time
+/*
 const xElem = document.querySelector('#x');
 const yElem = document.querySelector('#y');
 const isMobileSpan = document.querySelector('#isMobile');
-
+*/
 let isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
 init();
@@ -37,15 +38,16 @@ animate();
 
 function init() { 
 
-  isMobileSpan.innerHTML = isMobile;
+  //isMobileSpan.innerHTML = isMobile;
 
   /// CREATE CONTAINER
+  /*
   container = document.createElement('div');
   document.body.appendChild(container);
-
   /// STATS \\\
   stats = new Stats();
   container.appendChild(stats.dom);
+  */
 
   /// SCENE \\\
   scene = new THREE.Scene();
@@ -60,8 +62,9 @@ function init() {
   CamGroup.add(camera);
   scene.add(CamGroup);
 
-  if (isMobile == true) {    
-    controls = new DeviceOrientationControls( camera );
+  /// GYROSCOPE CONTROLS
+  if (isMobile) {
+    controls = new DeviceOrientationControls( CamGroup );
   }
 
   /// GRID \\\
@@ -181,8 +184,8 @@ function onTouchMove(event) {
   touch.x = (event.touches[0].clientX / window.innerWidth) * 2 - 1;
   touch.y = - (event.touches[0].clientY / window.innerHeight) * 2 + 1;
 
-  xElem.innerHTML = touch.x.toFixed(2);
-  yElem.innerHTML = touch.y.toFixed(2);
+  /* xElem.innerHTML = touch.x.toFixed(2);
+  yElem.innerHTML = touch.y.toFixed(2); */
 
   /// RAYCASTING \\\
   raycaster.setFromCamera(touch, camera);
@@ -283,6 +286,10 @@ function onWindowResize() {
 
 /// ANIMATE AND RENDER \\\
 function animate() {
+
+  if (isMobile) {
+    controls.update();    
+  }
 
   //stats.begin();
   render();
