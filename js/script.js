@@ -1,5 +1,5 @@
 import * as THREE from './three.module.js';
-import Stats from './stats.module.js';
+//import Stats from './stats.module.js';
 import { DeviceOrientationControls } from './DeviceOrientationControls.js';
 
 let container, stats;
@@ -37,15 +37,15 @@ animate();
 
 function init() { 
 
-  isMobileSpan.innerHTML = isMobile;
+  //isMobileSpan.innerHTML = isMobile;
 
   /// CREATE CONTAINER
   container = document.createElement('div');
   document.body.appendChild(container);
 
   /// STATS \\\
-  stats = new Stats();
-  container.appendChild(stats.dom);
+  //stats = new Stats();
+  //container.appendChild(stats.dom);
 
   /// SCENE \\\
   scene = new THREE.Scene();
@@ -53,7 +53,7 @@ function init() {
 
   /// CAMERA \\\
   camera = new THREE.PerspectiveCamera(15, window.innerWidth / window.innerHeight, 0.5, 500);
-  camera.position.set(0, 40, 90);
+  camera.position.set(0, 40, window.innerWidth / window.innerHeight*30);
   camera.lookAt(0, 0, 0);
 
   /// CamGroup \\\
