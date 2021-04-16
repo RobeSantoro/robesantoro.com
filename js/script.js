@@ -1,6 +1,6 @@
 import * as THREE from './three.module.js';
 //import Stats from './stats.module.js';
-import { DeviceOrientationControls } from './DeviceOrientationControls.js';
+
 
 let container, stats;
 let camera, scene, renderer;
@@ -14,7 +14,7 @@ let isTouching;
 
 let controls;
 
-let OrientationX, OrientationY;
+
 
 /// RAYCASTER \\\
 
@@ -59,11 +59,6 @@ function init() {
   /// CamGroup \\\
   CamGroup.add(camera);
   scene.add(CamGroup);
-
-  /// GYROSCOPE CONTROLS
-  if (isMobile == true) {    
-    controls = new DeviceOrientationControls( CamGroup );
-  }
 
   /// GRID \\\
   /* const size = 20;  const divisions = 20;  const gridHelper = new THREE.GridHelper(size, divisions);  scene.add(gridHelper);  const axesHelper = new THREE.AxesHelper(5);  scene.add(axesHelper);  */
@@ -182,8 +177,8 @@ function onTouchMove(event) {
   touch.x = (event.touches[0].clientX / window.innerWidth) * 2 - 1;
   touch.y = - (event.touches[0].clientY / window.innerHeight) * 2 + 1;
 
-  xElem.innerHTML = touch.x.toFixed(2);
-  yElem.innerHTML = touch.y.toFixed(2);
+  //xElem.innerHTML = touch.x.toFixed(2);
+  //yElem.innerHTML = touch.y.toFixed(2);
 
   /// RAYCASTING \\\
   raycaster.setFromCamera(touch, camera);
@@ -199,8 +194,13 @@ function onTouchMove(event) {
     }
   }
 
+  //IF ON MOBILE
+
   if (isMobile) {
+    // Move light with touch
     bulbLight.position.set(bulbPosition.x, bulbPosition.y, bulbPosition.z);
+    //Rotate Camera CamGroup
+    CamGroup.rotation.set(touch.y * .1, touch.x * .1, 0);
   }
 
 }
@@ -232,6 +232,7 @@ function onMouseDown(event) {
 function onMouseUp(event) {
   IsClicking = false;
 }
+
 function onMouseMove(event) {
 
   // get normalized mouse coordinates for raycaster
@@ -241,7 +242,7 @@ function onMouseMove(event) {
   let bulbPosition = new THREE.Vector3(mouse.x * 10, mouse.y * 6 + 3, -mouse.y * 5 + 5);
 
 
-  /// IF MOBILE \\\
+  /// IF NOT ON MOBILE \\\
   if (!isMobile) {
 
     // Move light
@@ -284,10 +285,6 @@ function onWindowResize() {
 
 /// ANIMATE AND RENDER \\\
 function animate() {
-
-  if (isMobile) {    
-    controls.update();
-  }
 
   //stats.begin();
   render();
